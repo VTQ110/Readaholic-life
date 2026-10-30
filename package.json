@@ -1,0 +1,28 @@
+{
+  "name": "readaholic-life",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "data": "node scripts/build-data.mjs",
+    "predev": "npm run data",
+    "dev": "next dev",
+    "prebuild": "npm run data",
+    "build": "next build",
+    "preview": "npx serve out",
+    "new-story": "node scripts/new-story.mjs",
+    "new-chapter": "node scripts/new-chapter.mjs"
+  },
+  "dependencies": {
+    "next": "15.5.28",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "gray-matter": "4.0.3",
+    "marked": "18.1.2",
+    "typescript": "^5.9.0"
+  }
+}
