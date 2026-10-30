@@ -29,11 +29,12 @@ function Home() {
   const qParam = params.get("q") ?? "";
   const tag = params.get("tag") ?? "";
   const status = params.get("status") ?? "";
+  const author = params.get("author") ?? "";
   // Ô tìm kiếm giữ giá trị riêng, không lấy trực tiếp từ URL: cập nhật URL mỗi phím gõ
   // làm hỏng bộ gõ tiếng Việt (Telex/VNI) vì chữ đang ghép dấu bị ghi đè.
   const [q, setQ] = useState(qParam);
   const written = useRef(qParam);
-  const filtering = Boolean(q || tag || status);
+  const filtering = Boolean(q || tag || status || author);
 
   // Đồng bộ lại khi URL đổi từ bên ngoài (bấm Back, bấm link thể loại...)
   useEffect(() => {
@@ -68,6 +69,12 @@ function Home() {
     return [...all].sort((a, b) => a.localeCompare(b, "vi"));
   }, [data]);
 
+  const authors = useMemo(() => {
+    const all = new Set<string>();
+    data?.stories.forEach((s) => s.author && all.add(s.author));
+    return [...all].sort((a, b) => a.localeCompare(b, "vi"));
+  }, [data]);
+
   const results = useMemo(() => {
     if (!data) return [];
     const needle = normalize(q);
@@ -75,9 +82,10 @@ function Home() {
       (s) =>
         (!needle || normalize(s.title).includes(needle) || normalize(s.author).includes(needle)) &&
         (!tag || s.tags.includes(tag)) &&
-        (!status || s.status === status),
+        (!status || s.status === status) &&
+        (!author || s.author === author),
     );
-  }, [data, q, tag, status]);
+  }, [data, q, tag, status, author]);
 
   if (error) return <p className="error center">{error}</p>;
   if (!data) return <p className="center muted">Đang tải...</p>;
@@ -104,6 +112,14 @@ function Home() {
           {tags.map((t) => (
             <option key={t} value={t}>
               {t}
+            </option>
+          ))}
+        </select>
+        <select value={author} onChange={(e) => setFilter("author", e.target.value)} aria-label="Tác giả">
+          <option value="">Tất cả tác giả</option>
+          {authors.map((a) => (
+            <option key={a} value={a}>
+              {a}
             </option>
           ))}
         </select>

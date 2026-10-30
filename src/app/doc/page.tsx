@@ -8,8 +8,10 @@ import { formatDate, formatNumber } from "@/components/format";
 import { useData } from "@/lib/useData";
 import { setProgress } from "@/lib/progress";
 import type { Chapter, Story } from "@/lib/types";
+import { READER_FONTS, fontFamily } from "@/lib/fonts";
 
 const FONT_KEY = "readaholic:font";
+const FAMILY_KEY = "readaholic:fontFamily";
 
 function Reader() {
   const params = useSearchParams();
@@ -20,11 +22,13 @@ function Reader() {
   const { data: story } = useData<Story>(slug ? `s/${slug}.json` : null);
   const { data: chapter, error } = useData<Chapter>(slug ? `s/${slug}/${n}.json` : null);
   const [font, setFont] = useState(19);
+  const [family, setFamily] = useState("default");
 
   useEffect(() => {
     try {
       const f = Number(localStorage.getItem(FONT_KEY));
       if (f) setFont(f);
+      setFamily(localStorage.getItem(FAMILY_KEY) || "default");
     } catch {}
   }, []);
 
@@ -33,6 +37,13 @@ function Reader() {
     setFont(f);
     try {
       localStorage.setItem(FONT_KEY, String(f));
+    } catch {}
+  }
+
+  function changeFamily(id: string) {
+    setFamily(id);
+    try {
+      localStorage.setItem(FAMILY_KEY, id);
     } catch {}
   }
 
@@ -115,10 +126,17 @@ function Reader() {
               <button className="btn ghost small" onClick={() => changeFont(1)} aria-label="Tăng cỡ chữ">
                 A+
               </button>
+              <select className="font-select" value={family} onChange={(e) => changeFamily(e.target.value)} aria-label="Phông chữ">
+                {READER_FONTS.map((f) => (
+                  <option key={f.id} value={f.id} style={{ fontFamily: f.family }}>
+                    {f.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </header>
           {nav}
-          <div className="prose" style={{ fontSize: font }} dangerouslySetInnerHTML={{ __html: chapter.html }} />
+          <div className="prose" style={{ fontSize: font, fontFamily: fontFamily(family) }} dangerouslySetInnerHTML={{ __html: chapter.html }} />
           {nav}
           {!next && story?.status === "ongoing" && (
             <p className="center muted">Bạn đã đọc tới chương mới nhất. Chờ chương sau nhé!</p>

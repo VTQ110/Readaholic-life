@@ -646,3 +646,23 @@ a.tag:hover {
   margin-left: 8px;
   color: var(--accent);
 }
+.font-select {
+  font: inherit;
+  font-size: 0.875rem;
+  margin-left: 8px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+.font-tools {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.author-link {
+  color: var(--accent);
+}
+.author-link:hover {
+  text-decoration: underline;
+}

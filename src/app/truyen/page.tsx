@@ -34,7 +34,14 @@ function StoryView() {
         <Cover slug={story.slug} title={story.title} hasCover={story.hasCover} />
         <div>
           <h1>{story.title}</h1>
-          {story.author && <p className="muted">Tác giả: {story.author}</p>}
+          {story.author && (
+            <p className="muted">
+              Tác giả:{" "}
+              <Link className="author-link" href={`/?author=${encodeURIComponent(story.author)}`}>
+                {story.author}
+              </Link>
+            </p>
+          )}
           <p className="small">
             <span className={`badge ${story.status}`}>{STATUS_LABEL[story.status]}</span> {story.chapterCount} chương ·{" "}
             {formatNumber(story.words)} chữ · Cập nhật {formatDate(story.updatedAt)}

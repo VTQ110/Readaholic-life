@@ -40,6 +40,13 @@ git commit -am "Đổi mã" && git push
 
 Rồi đổi secret `ACCESS_CODE` thành mã mới. Nếu chỉ đổi secret mà không mã hoá lại, bản build sẽ báo lỗi.
 
+## Phông chữ khi đọc
+
+Ở trang đọc chương, người đọc chọn được phông: **Mặc định**, **Bookerly**, **Caecilia**, **Literata**. Lựa chọn được ghi nhớ trên trình duyệt.
+
+- **Literata** là phông miễn phí, tải từ Google Fonts, có hỗ trợ tiếng Việt.
+- **Bookerly** (của Amazon) và **Caecilia** (của Linotype) là phông bản quyền, nên trang không kèm sẵn. Trang sẽ dùng phông này nếu máy người đọc đã cài, hoặc nếu bạn có file phông hợp lệ thì đặt vào `public/fonts/` theo tên ghi trong `public/fonts/README.md`. Không có thì hiện phông thay thế: Georgia cho Bookerly, Roboto Slab cho Caecilia.
+
 ## Cấu trúc dữ liệu
 
 ```
@@ -69,7 +76,7 @@ content/
 ```
 
 - `status`: `"ongoing"` (đang ra) hoặc `"completed"` (hoàn thành).
-- `tags`: thể loại. Trang chủ có ô tìm kiếm theo tên truyện/tác giả (gõ không dấu cũng được), lọc theo thể loại và tình trạng.
+- `tags`: thể loại. Trang chủ có ô tìm kiếm theo tên truyện/tác giả (gõ không dấu cũng được), lọc theo thể loại, tác giả và tình trạng.
 - Thêm `"draft": true` để ẩn cả truyện.
 
 Mỗi chương (`chapters/001.md`):
