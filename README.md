@@ -42,6 +42,7 @@ content/
 ```
 
 - `status`: `"ongoing"` (đang ra) hoặc `"completed"` (hoàn thành).
+- `tags`: thể loại. Trang chủ có ô tìm kiếm theo tên truyện/tác giả (gõ không dấu cũng được), lọc theo thể loại và tình trạng.
 - Thêm `"draft": true` để ẩn cả truyện.
 
 Mỗi chương (`chapters/001.md`):

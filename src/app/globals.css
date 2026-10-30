@@ -445,3 +445,42 @@ main.container {
   border-radius: 4px;
   background: var(--border);
 }
+
+/* Search */
+.search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.search input,
+.search select {
+  font: inherit;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+.search input {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.search select {
+  flex: 1 1 140px;
+  max-width: 200px;
+  min-width: 0;
+}
+.search input:focus,
+.search select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+@media (max-width: 600px) {
+  .search select {
+    max-width: none;
+  }
+}
+a.tag:hover {
+  color: var(--accent);
+}

@@ -42,9 +42,9 @@ function StoryView() {
           {story.tags.length > 0 && (
             <p className="tags">
               {story.tags.map((t) => (
-                <span key={t} className="tag">
+                <Link key={t} className="tag" href={`/?tag=${encodeURIComponent(t)}`}>
                   {t}
-                </span>
+                </Link>
               ))}
             </p>
           )}
