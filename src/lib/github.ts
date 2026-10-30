@@ -43,7 +43,17 @@ export class GitHub {
       },
     });
     if (!res.ok) {
-      const msg = res.status === 401 ? "Token không hợp lệ hoặc đã hết hạn" : res.status === 403 ? "Token không có quyền ghi vào repo" : `GitHub trả lỗi ${res.status}`;
+      const detail = ((await res.json().catch(() => ({}))) as { message?: string }).message ?? "";
+      const msg =
+        res.status === 401
+          ? "Token không hợp lệ hoặc đã hết hạn."
+          : res.status === 403 && /rate limit/i.test(detail)
+            ? "GitHub tạm giới hạn số lần gọi, thử lại sau ít phút."
+            : res.status === 403
+              ? "Token chưa có quyền ghi vào repo này. Kiểm tra token: Repository access phải chọn đúng repo, và Permissions → Contents phải là “Read and write”."
+              : res.status === 404
+                ? "Không tìm thấy repo hoặc nhánh, kiểm tra lại tên repo/nhánh và quyền truy cập của token."
+                : `GitHub trả lỗi ${res.status}`;
       const err = new Error(msg) as Error & { status: number };
       err.status = res.status;
       throw err;
@@ -51,10 +61,13 @@ export class GitHub {
     return res.json();
   }
 
-  /** Kiểm tra token: trả về true nếu có quyền ghi. */
-  async checkAccess(): Promise<boolean> {
-    const repo = await this.api<{ permissions?: { push?: boolean } }>("");
-    return Boolean(repo.permissions?.push);
+  /**
+   * Kiểm tra token có thật sự ghi được vào repo không. `permissions` trong thông tin repo là quyền của
+   * tài khoản chứ không phải của token, nên thử tạo một blob rỗng (không gắn vào commit nào, không ảnh hưởng repo).
+   */
+  async checkAccess() {
+    await this.api(`/git/ref/heads/${encodeURIComponent(this.config.branch)}`);
+    await this.api("/git/blobs", { method: "POST", body: JSON.stringify({ content: "", encoding: "utf-8" }) });
   }
 
   /** Liệt kê thư mục; trả về [] nếu thư mục chưa tồn tại. */

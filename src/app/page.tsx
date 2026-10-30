@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Protected from "@/components/Protected";
@@ -26,19 +26,41 @@ function Home() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const q = params.get("q") ?? "";
+  const qParam = params.get("q") ?? "";
   const tag = params.get("tag") ?? "";
   const status = params.get("status") ?? "";
+  // Ô tìm kiếm giữ giá trị riêng, không lấy trực tiếp từ URL: cập nhật URL mỗi phím gõ
+  // làm hỏng bộ gõ tiếng Việt (Telex/VNI) vì chữ đang ghép dấu bị ghi đè.
+  const [q, setQ] = useState(qParam);
+  const written = useRef(qParam);
   const filtering = Boolean(q || tag || status);
+
+  // Đồng bộ lại khi URL đổi từ bên ngoài (bấm Back, bấm link thể loại...)
+  useEffect(() => {
+    if (qParam !== written.current) {
+      written.current = qParam;
+      setQ(qParam);
+    }
+  }, [qParam]);
 
   // Lưu bộ lọc lên URL để tải lại trang hoặc gửi link vẫn giữ kết quả
   function setFilter(name: string, value: string) {
-    const next = new URLSearchParams(params.toString());
+    const next = new URLSearchParams(window.location.search);
     if (value) next.set(name, value);
     else next.delete(name);
     const qs = next.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
+
+  useEffect(() => {
+    if (q === written.current) return;
+    const t = setTimeout(() => {
+      written.current = q;
+      setFilter("q", q);
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q]);
 
   const tags = useMemo(() => {
     const all = new Set<string>();
@@ -74,7 +96,7 @@ function Home() {
           type="search"
           placeholder="Tìm theo tên truyện hoặc tác giả..."
           value={q}
-          onChange={(e) => setFilter("q", e.target.value)}
+          onChange={(e) => setQ(e.target.value)}
           aria-label="Tìm truyện"
         />
         <select value={tag} onChange={(e) => setFilter("tag", e.target.value)} aria-label="Thể loại">
@@ -94,7 +116,14 @@ function Home() {
           ))}
         </select>
         {filtering && (
-          <button className="btn ghost small" onClick={() => router.replace(pathname, { scroll: false })}>
+          <button
+            className="btn ghost small"
+            onClick={() => {
+              written.current = "";
+              setQ("");
+              router.replace(pathname, { scroll: false });
+            }}
+          >
             Xoá lọc
           </button>
         )}

@@ -28,11 +28,11 @@ function TokenForm({ initial, onDone }: { initial: GitHubConfig; onDone: (c: Git
     setError("");
     try {
       const c = { token: config.token.trim(), repo: config.repo.trim(), branch: config.branch.trim() };
-      if (!(await new GitHub(c).checkAccess())) throw new Error("Token chỉ có quyền đọc, cần quyền ghi (Contents: Read and write).");
+      await new GitHub(c).checkAccess();
       saveConfig(c);
       onDone(c);
     } catch (e) {
-      setError((e as Error).message === "GitHub trả lỗi 404" ? "Không tìm thấy repo, kiểm tra lại tên repo hoặc quyền của token." : (e as Error).message);
+      setError((e as Error).message);
     } finally {
       setBusy(false);
     }
