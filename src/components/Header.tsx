@@ -15,6 +15,11 @@ export default function Header({ title }: { title: string }) {
         <div className="header-actions">
           <ThemeToggle />
           {status === "unlocked" && (
+            <Link href="/quan-ly/" className="btn ghost small">
+              Quản lý
+            </Link>
+          )}
+          {status === "unlocked" && (
             <button className="btn ghost small" onClick={lock}>
               Khoá
             </button>

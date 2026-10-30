@@ -30,6 +30,8 @@ jobs:
         env:
           ACCESS_CODE: ${{ secrets.ACCESS_CODE }}
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+          NEXT_PUBLIC_GITHUB_REPO: ${{ github.repository }}
+          NEXT_PUBLIC_GITHUB_BRANCH: ${{ github.ref_name }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out

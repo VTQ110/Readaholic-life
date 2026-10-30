@@ -38,6 +38,24 @@ function encrypt(obj) {
   return JSON.stringify({ iv: iv.toString("base64"), data: data.toString("base64") });
 }
 
+function decrypt(text, file) {
+  try {
+    const { iv, data } = JSON.parse(text);
+    const buf = Buffer.from(data, "base64");
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(iv, "base64"));
+    decipher.setAuthTag(buf.subarray(-16));
+    return JSON.parse(Buffer.concat([decipher.update(buf.subarray(0, -16)), decipher.final()]).toString("utf8"));
+  } catch {
+    console.error(`✗ Không giải mã được ${path.relative(ROOT, file)}.`);
+    console.error("  File này được mã hoá bằng mã bí mật khác. Nếu vừa đổi ACCESS_CODE, chạy: npm run reencrypt -- <mã-cũ> <mã-mới>");
+    process.exit(1);
+  }
+}
+
+function readEncrypted(file) {
+  return decrypt(fs.readFileSync(file, "utf8"), file);
+}
+
 function write(rel, obj) {
   const file = path.join(OUT, rel);
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -66,26 +84,35 @@ const slugs = fs.existsSync(STORIES)
 
 for (const slug of slugs) {
   const dir = path.join(STORIES, slug);
+  // Truyện tạo trên web được lưu mã hoá (*.enc.json); truyện viết tay dùng file thường
+  const encMeta = path.join(dir, "story.enc.json");
   const metaFile = path.join(dir, "story.json");
-  if (!fs.existsSync(metaFile)) {
+  let meta;
+  if (fs.existsSync(encMeta)) meta = readEncrypted(encMeta);
+  else if (fs.existsSync(metaFile)) meta = JSON.parse(fs.readFileSync(metaFile, "utf8"));
+  else {
     console.warn(`⚠ Bỏ qua "${slug}": thiếu story.json`);
     continue;
   }
-  const meta = JSON.parse(fs.readFileSync(metaFile, "utf8"));
   if (meta.draft) continue;
 
   const chapterDir = path.join(dir, "chapters");
   const files = fs.existsSync(chapterDir)
-    ? fs.readdirSync(chapterDir).filter((f) => f.endsWith(".md")).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    ? fs.readdirSync(chapterDir).filter((f) => f.endsWith(".md") || f.endsWith(".enc.json")).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
     : [];
 
   const chapters = [];
   for (const file of files) {
-    const raw = fs.readFileSync(path.join(chapterDir, file), "utf8");
-    const { data, content } = matter(raw);
+    const full = path.join(chapterDir, file);
+    let data, content;
+    if (file.endsWith(".enc.json")) {
+      ({ content, ...data } = readEncrypted(full));
+    } else {
+      ({ data, content } = matter(fs.readFileSync(full, "utf8")));
+    }
     if (data.draft) continue;
     const n = chapters.length + 1;
-    const mtime = fs.statSync(path.join(chapterDir, file)).mtime.toISOString().slice(0, 10);
+    const mtime = fs.statSync(full).mtime.toISOString().slice(0, 10);
     const chapter = {
       n,
       title: data.title || `Chương ${n}`,
@@ -96,8 +123,13 @@ for (const slug of slugs) {
     write(`s/${slug}/${n}.json`, { ...chapter, html: marked.parse(content) });
   }
 
-  const cover = Object.keys(MIME).map((ext) => path.join(dir, "cover" + ext)).find((f) => fs.existsSync(f));
-  if (cover) {
+  const encCover = path.join(dir, "cover.enc.json");
+  const cover = fs.existsSync(encCover)
+    ? encCover
+    : Object.keys(MIME).map((ext) => path.join(dir, "cover" + ext)).find((f) => fs.existsSync(f));
+  if (cover === encCover) {
+    write(`c/${slug}.json`, readEncrypted(encCover));
+  } else if (cover) {
     const b64 = fs.readFileSync(cover).toString("base64");
     write(`c/${slug}.json`, { src: `data:${MIME[path.extname(cover)]};base64,${b64}` });
   }

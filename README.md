@@ -13,6 +13,33 @@ Lưu ý:
 - Đổi mã: chỉ cần đổi secret `ACCESS_CODE` rồi chạy lại workflow. Người đọc cũ sẽ phải nhập mã mới.
 - Sau khi nhập đúng, trình duyệt ghi nhớ cho lần sau. Bấm **Khoá** để đăng xuất.
 
+## Đăng truyện trực tiếp trên web (khuyên dùng)
+
+Sau khi nhập mã, bấm **Quản lý** ở góc trên. Tại đây bạn có thể tạo truyện, sửa thông tin, đặt ảnh bìa, thêm, sửa hoặc xoá chương, và xem trước nội dung. Bài đang viết được tự lưu nháp trên trình duyệt, nên lỡ đóng trang cũng không mất.
+
+Trang web tĩnh không tự lưu file được, nên trang quản lý **commit thẳng vào repo qua GitHub API**, sau đó GitHub tự build lại trang (1–2 phút). Lần đầu bạn cần dán một token GitHub:
+
+1. Mở https://github.com/settings/personal-access-tokens/new
+2. *Repository access* → *Only select repositories* → chọn repo này.
+3. *Permissions → Repository permissions → Contents* → **Read and write**.
+4. Generate token, dán vào trang Quản lý. Token chỉ lưu trên trình duyệt của bạn.
+
+Nội dung tạo trên web được **mã hoá ngay trong trình duyệt** trước khi commit (các file `*.enc.json`), nên dù repo để Public thì người khác cũng không đọc được truyện trên GitHub.
+
+> ⚠ File viết tay (`.md`, `story.json`, `cover.jpg`) **không** được mã hoá: repo Public thì ai cũng đọc được. Mở truyện đó trong trang Quản lý và bấm Lưu (cả từng chương) để chuyển sang dạng mã hoá.
+
+### Đổi mã bí mật
+
+Các file `*.enc.json` được mã hoá bằng mã hiện tại. Khi đổi mã:
+
+```bash
+git pull
+npm run reencrypt -- <mã-cũ> <mã-mới>
+git commit -am "Đổi mã" && git push
+```
+
+Rồi đổi secret `ACCESS_CODE` thành mã mới. Nếu chỉ đổi secret mà không mã hoá lại, bản build sẽ báo lỗi.
+
 ## Cấu trúc dữ liệu
 
 ```
@@ -59,7 +86,9 @@ Nội dung chương. Mỗi đoạn cách nhau một dòng trống.
 - Chương được sắp theo tên file (001, 002, ...).
 - Thêm `draft: true` vào phần đầu để ẩn chương đang viết dở.
 
-## Đăng truyện / chương mới
+## Đăng truyện / chương bằng file (cách thủ công)
+
+Cách này tạo file **không mã hoá**, chỉ nên dùng khi repo để Private.
 
 ```bash
 npm run new-story -- "Tên truyện"                 # tạo thư mục truyện mới
