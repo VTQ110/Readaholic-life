@@ -29,6 +29,8 @@ jobs:
       - run: npm run build
         env:
           ACCESS_CODE: ${{ secrets.ACCESS_CODE }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
           NEXT_PUBLIC_GITHUB_REPO: ${{ github.repository }}
           NEXT_PUBLIC_GITHUB_BRANCH: ${{ github.ref_name }}

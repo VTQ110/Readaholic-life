@@ -31,9 +31,9 @@ if (!code) {
 const site = JSON.parse(fs.readFileSync(path.join(CONTENT, "site.json"), "utf8"));
 const key = crypto.pbkdf2Sync(code, site.salt, PBKDF2_ITERATIONS, 32, "sha256");
 
-function encrypt(obj) {
+function encrypt(obj, k = key) {
   const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const cipher = crypto.createCipheriv("aes-256-gcm", k, iv);
   const data = Buffer.concat([cipher.update(JSON.stringify(obj), "utf8"), cipher.final(), cipher.getAuthTag()]);
   return JSON.stringify({ iv: iv.toString("base64"), data: data.toString("base64") });
 }
@@ -154,5 +154,18 @@ for (const slug of slugs) {
 
 index.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 write("index.json", { title: site.title, description: site.description, stories: index });
+// Token GitHub cho trang quản lý: mã hoá bằng mật khẩu quản lý (ADMIN_PASSWORD),
+// rồi bọc thêm một lớp bằng mã đọc truyện như mọi dữ liệu khác.
+const ADMIN_ITERATIONS = 600000; // Phải khớp với src/lib/crypto.ts
+if (process.env.ADMIN_TOKEN && process.env.ADMIN_PASSWORD) {
+  const salt = crypto.randomBytes(16);
+  const adminKey = crypto.pbkdf2Sync(process.env.ADMIN_PASSWORD, salt, ADMIN_ITERATIONS, 32, "sha256");
+  const inner = JSON.parse(encrypt({ token: process.env.ADMIN_TOKEN.trim() }, adminKey));
+  write("admin.json", { ...inner, salt: salt.toString("base64"), iterations: ADMIN_ITERATIONS });
+  console.log("✓ Đã đóng gói token quản lý (mở bằng mật khẩu quản lý)");
+} else if (process.env.ADMIN_TOKEN || process.env.ADMIN_PASSWORD) {
+  console.warn("⚠ Cần đặt cả ADMIN_TOKEN và ADMIN_PASSWORD thì mới dùng được đăng nhập bằng mật khẩu quản lý.");
+}
+
 fs.writeFileSync(path.join(OUT, "salt.json"), JSON.stringify({ salt: site.salt, iterations: PBKDF2_ITERATIONS }));
 console.log(`✓ Đã mã hoá ${index.length} truyện vào public/data/`);

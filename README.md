@@ -24,6 +24,15 @@ Trang web tĩnh không tự lưu file được, nên trang quản lý **commit t
 3. *Permissions → Repository permissions → Contents* → **Read and write**.
 4. Generate token, dán vào trang Quản lý. Token chỉ lưu trên trình duyệt của bạn.
 
+### Đăng nhập bằng mật khẩu quản lý (không phải dán token ở từng máy)
+
+Tạo token một lần như trên, rồi vào **Settings → Secrets and variables → Actions** và tạo thêm 2 secret:
+
+- `ADMIN_TOKEN`: token GitHub vừa tạo.
+- `ADMIN_PASSWORD`: mật khẩu quản lý do bạn đặt. Nên dài từ 12 ký tự trở lên và **khác** mã đọc truyện.
+
+Chạy lại workflow (hoặc lưu một chương bất kỳ). Từ đó, vào trang Quản lý chỉ cần gõ mật khẩu quản lý. Token được mã hoá bằng mật khẩu này lúc build, nên người chỉ có mã đọc truyện không lấy được token. Khi token hết hạn, chỉ cần tạo token mới, cập nhật secret `ADMIN_TOKEN`, rồi đăng xuất và đăng nhập lại.
+
 Nội dung tạo trên web được **mã hoá ngay trong trình duyệt** trước khi commit (các file `*.enc.json`), nên dù repo để Public thì người khác cũng không đọc được truyện trên GitHub.
 
 > ⚠ File viết tay (`.md`, `story.json`, `cover.jpg`) **không** được mã hoá: repo Public thì ai cũng đọc được. Mở truyện đó trong trang Quản lý và bấm Lưu (cả từng chương) để chuyển sang dạng mã hoá.

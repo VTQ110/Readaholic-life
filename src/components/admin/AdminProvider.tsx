@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { ContentStore } from "@/lib/content";
 import { GitHub, loadConfig, saveConfig, type GitHubConfig } from "@/lib/github";
+import { fetchDecrypted, openWithPassword, type PasswordSealed } from "@/lib/crypto";
 import Protected from "../Protected";
 
 type Admin = { store: ContentStore; config: GitHubConfig; signOut: () => void };
@@ -15,6 +16,64 @@ export function useAdmin() {
   const ctx = useContext(AdminContext);
   if (!ctx) throw new Error("useAdmin phải nằm trong AdminProvider");
   return ctx;
+}
+
+function PasswordForm({
+  sealed,
+  initial,
+  onDone,
+  onManual,
+}: {
+  sealed: PasswordSealed;
+  initial: GitHubConfig;
+  onDone: (c: GitHubConfig) => void;
+  onManual: () => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    let token: string;
+    try {
+      ({ token } = await openWithPassword<{ token: string }>(password, sealed));
+    } catch {
+      setError("Mật khẩu quản lý không đúng.");
+      setPassword("");
+      setBusy(false);
+      return;
+    }
+    try {
+      const c = { ...initial, token };
+      await new GitHub(c).checkAccess();
+      saveConfig(c);
+      onDone(c);
+    } catch (e) {
+      setError(`Mật khẩu đúng nhưng token lưu trong secret ADMIN_TOKEN không dùng được: ${(e as Error).message}`);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className="panel form narrow" onSubmit={submit}>
+      <h1>Đăng nhập quản lý</h1>
+      <p className="muted">Nhập mật khẩu quản lý để đăng và sửa truyện.</p>
+      <label>
+        Mật khẩu quản lý
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus autoComplete="current-password" />
+      </label>
+      {error && <p className="error">{error}</p>}
+      <button className="btn primary" disabled={busy || !password}>
+        {busy ? "Đang kiểm tra..." : "Đăng nhập"}
+      </button>
+      <button type="button" className="btn ghost small" onClick={onManual}>
+        Dùng token GitHub thủ công
+      </button>
+    </form>
+  );
 }
 
 function TokenForm({ initial, onDone }: { initial: GitHubConfig; onDone: (c: GitHubConfig) => void }) {
@@ -89,8 +148,18 @@ function TokenForm({ initial, onDone }: { initial: GitHubConfig; onDone: (c: Git
 function AdminInner({ children }: { children: React.ReactNode }) {
   const { key } = useAuth();
   const [config, setConfig] = useState<GitHubConfig | null>(null);
+  // undefined: đang kiểm tra; null: trang không có token đóng gói sẵn
+  const [sealed, setSealed] = useState<PasswordSealed | null | undefined>(undefined);
+  const [manual, setManual] = useState(false);
 
   useEffect(() => setConfig(loadConfig()), []);
+
+  useEffect(() => {
+    if (!key) return;
+    fetchDecrypted<PasswordSealed>(key, "admin.json")
+      .then(setSealed)
+      .catch(() => setSealed(null));
+  }, [key]);
 
   const admin = useMemo<Admin | null>(() => {
     if (!config?.token || !key) return null;
@@ -105,7 +174,11 @@ function AdminInner({ children }: { children: React.ReactNode }) {
   }, [config, key]);
 
   if (!config) return null;
-  if (!admin) return <TokenForm initial={config} onDone={setConfig} />;
+  if (!admin) {
+    if (sealed === undefined) return <p className="muted">Đang tải...</p>;
+    if (sealed && !manual) return <PasswordForm sealed={sealed} initial={config} onDone={setConfig} onManual={() => setManual(true)} />;
+    return <TokenForm initial={config} onDone={setConfig} />;
+  }
 
   return (
     <AdminContext.Provider value={admin}>
@@ -117,7 +190,7 @@ function AdminInner({ children }: { children: React.ReactNode }) {
           </a>
         </span>
         <button className="btn ghost small" onClick={admin.signOut}>
-          Ngắt kết nối GitHub
+          Đăng xuất quản lý
         </button>
       </div>
       {children}

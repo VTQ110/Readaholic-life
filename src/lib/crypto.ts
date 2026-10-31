@@ -55,3 +55,18 @@ export async function fetchDecrypted<T>(key: CryptoKey, file: string): Promise<T
   if (!res.ok) throw new Error(`Không tìm thấy dữ liệu (${res.status})`);
   return decryptJson<T>(key, await res.text());
 }
+
+export type PasswordSealed = { salt: string; iterations: number; iv: string; data: string };
+
+/** Mở dữ liệu được mã hoá bằng mật khẩu (dùng cho token quản lý). Sai mật khẩu sẽ ném lỗi. */
+export async function openWithPassword<T>(password: string, sealed: PasswordSealed): Promise<T> {
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt: b64ToBytes(sealed.salt), iterations: sealed.iterations, hash: "SHA-256" },
+    base,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["decrypt"],
+  );
+  return decryptJson<T>(key, JSON.stringify({ iv: sealed.iv, data: sealed.data }));
+}
