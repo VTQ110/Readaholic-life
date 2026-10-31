@@ -25,9 +25,14 @@ function StoryList() {
       {saved && <SavedNotice />}
       <div className="row">
         <h1>Quản lý truyện</h1>
-        <Link className="btn primary" href="/quan-ly/truyen/">
-          + Truyện mới
-        </Link>
+        <span className="actions">
+          <Link className="btn" href="/quan-ly/nhap-epub/">
+            ⬆ Nhập từ EPUB
+          </Link>
+          <Link className="btn primary" href="/quan-ly/truyen/">
+            + Truyện mới
+          </Link>
+        </span>
       </div>
       {error && <p className="error">{error}</p>}
       {!stories && !error && <p className="muted">Đang tải từ GitHub...</p>}

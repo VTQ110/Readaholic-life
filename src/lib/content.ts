@@ -133,6 +133,35 @@ export class ContentStore {
     return { slug, meta, files, chapters };
   }
 
+  /** Tên thư mục chưa bị dùng cho một truyện mới. */
+  async uniqueSlug(title: string) {
+    const base = slugify(title) || `truyen-${Date.now()}`;
+    const taken = new Set((await this.listStories()).map((s) => s.slug));
+    let slug = base;
+    for (let i = 2; taken.has(slug); i++) slug = `${base}-${i}`;
+    return slug;
+  }
+
+  /** Tạo truyện mới cùng toàn bộ chương trong một commit (dùng khi nhập từ EPUB). */
+  async importStory(meta: StoryMeta, cover: string | null, chapters: ChapterSource[], onProgress?: (done: number, total: number) => void) {
+    const slug = await this.uniqueSlug(meta.title);
+    const dir = `${STORIES_DIR}/${slug}`;
+    const changes: FileChange[] = [{ path: `${dir}/story.enc.json`, content: await encryptJson(this.key, meta) }];
+    if (cover) changes.push({ path: `${dir}/cover.enc.json`, content: await encryptJson(this.key, { src: cover }) });
+    for (const [i, c] of chapters.entries()) {
+      changes.push({ path: `${dir}/chapters/${String(i + 1).padStart(3, "0")}.enc.json`, content: await encryptJson(this.key, c) });
+    }
+    const shas = await this.gh.commit(changes, `Nhập truyện từ EPUB: ${meta.title} (${chapters.length} chương)`, onProgress);
+    const all = Object.entries(shas).map(([p, sha]) => entry(p, sha));
+    remember(slug, {
+      slug,
+      meta,
+      files: all.filter((f) => !f.path.includes("/chapters/")),
+      chapters: sortChapters(all.filter((f) => f.path.includes("/chapters/"))),
+    });
+    return slug;
+  }
+
   async readCover(story: SourceStory): Promise<string | null> {
     const enc = story.files.find((f) => f.name === "cover.enc.json");
     if (enc) return (await decryptJson<{ src: string }>(this.key, await this.gh.readText(enc.sha))).src;

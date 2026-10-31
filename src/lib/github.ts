@@ -91,19 +91,30 @@ export class GitHub {
   }
 
   /** Ghi/xoá nhiều file trong một commit duy nhất (chỉ kích hoạt một lần deploy). Trả về sha của các file đã ghi. */
-  async commit(changes: FileChange[], message: string): Promise<Record<string, string>> {
+  async commit(changes: FileChange[], message: string, onProgress?: (done: number, total: number) => void): Promise<Record<string, string>> {
     const branch = encodeURIComponent(this.config.branch);
     const head = await this.api<{ object: { sha: string } }>(`/git/ref/heads/${branch}`);
     const parent = await this.api<{ tree: { sha: string } }>(`/git/commits/${head.object.sha}`);
 
-    const tree = await Promise.all(
-      changes.map(async (c) => {
-        if ("delete" in c) return { path: c.path, mode: "100644", type: "blob", sha: null };
-        const blob = await this.api<{ sha: string }>("/git/blobs", {
-          method: "POST",
-          body: JSON.stringify({ content: c.content, encoding: "utf-8" }),
-        });
-        return { path: c.path, mode: "100644", type: "blob", sha: blob.sha };
+    // Tải từng file lên song song nhưng giới hạn số request cùng lúc để GitHub không chặn
+    type TreeItem = { path: string; mode: string; type: string; sha: string | null };
+    const tree: TreeItem[] = new Array(changes.length);
+    const queue = [...changes.keys()];
+    let done = 0;
+    await Promise.all(
+      Array.from({ length: Math.min(4, changes.length) }, async () => {
+        for (let i = queue.shift(); i !== undefined; i = queue.shift()) {
+          const c = changes[i];
+          if ("delete" in c) tree[i] = { path: c.path, mode: "100644", type: "blob", sha: null };
+          else {
+            const blob = await this.api<{ sha: string }>("/git/blobs", {
+              method: "POST",
+              body: JSON.stringify({ content: c.content, encoding: "utf-8" }),
+            });
+            tree[i] = { path: c.path, mode: "100644", type: "blob", sha: blob.sha };
+          }
+          onProgress?.(++done, changes.length);
+        }
       }),
     );
 

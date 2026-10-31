@@ -68,7 +68,7 @@ blockquote { margin: 1em 1.5em; font-style: italic; }
 .cover { text-align: center; margin: 0; padding: 0; }
 .cover img { max-width: 100%; max-height: 100%; }`;
 
-type Book = { title: string; author: string; description: string; cover: string | null; chapters: Chapter[] };
+type Book = { title: string; author: string; description: string; tags?: string[]; cover: string | null; chapters: Chapter[] };
 
 function buildEpub(book: Book): Uint8Array {
   const id = `urn:uuid:${crypto.randomUUID()}`;
@@ -157,6 +157,7 @@ ${toc.map((t, i) => `<navPoint id="n${i + 1}" playOrder="${i + 1}"><navLabel><te
 ${book.author ? `<dc:creator>${xmlEscape(book.author)}</dc:creator>` : ""}
 <dc:language>vi</dc:language>
 ${book.description ? `<dc:description>${xmlEscape(book.description)}</dc:description>` : ""}
+${(book.tags ?? []).map((t) => `<dc:subject>${xmlEscape(t)}</dc:subject>`).join("\n")}
 <meta property="dcterms:modified">${modified}</meta>
 ${coverMeta}
 </metadata>
@@ -218,5 +219,5 @@ export async function downloadStory(key: CryptoKey, story: Story, format: Format
     }),
   );
   const cover = format === "epub" ? await loadCover(key, story) : null;
-  download({ title: story.title, author: story.author, description: story.description, cover, chapters }, story.title, format);
+  download({ title: story.title, author: story.author, description: story.description, tags: story.tags, cover, chapters }, story.title, format);
 }

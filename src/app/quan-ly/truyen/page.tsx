@@ -4,28 +4,11 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import AdminProvider, { SavedNotice, useAdmin } from "@/components/admin/AdminProvider";
-import { slugify, today, type SourceStory, type StoryMeta } from "@/lib/content";
+import { today, type SourceStory, type StoryMeta } from "@/lib/content";
 import type { DirEntry } from "@/lib/github";
+import { resizeImage } from "@/lib/image";
 
 const EMPTY: StoryMeta = { title: "", author: "", description: "", status: "ongoing", tags: [], created: "", draft: false };
-
-// Thu nhỏ ảnh bìa để dữ liệu nhẹ
-function resizeImage(file: File, max = 600): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, max / Math.max(img.width, img.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext("2d")!.drawImage(img, 0, 0, canvas.width, canvas.height);
-      URL.revokeObjectURL(img.src);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => reject(new Error("Không đọc được ảnh"));
-    img.src = URL.createObjectURL(file);
-  });
-}
 
 function StoryEditor() {
   const { store } = useAdmin();
@@ -89,13 +72,7 @@ function StoryEditor() {
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
         created: meta.created || today(),
       };
-      let target = slug;
-      if (!target) {
-        const base = slugify(data.title) || `truyen-${Date.now()}`;
-        const taken = new Set((await store.listStories()).map((s) => s.slug));
-        target = base;
-        for (let i = 2; taken.has(target); i++) target = `${base}-${i}`;
-      }
+      const target = slug ?? (await store.uniqueSlug(data.title));
       const updated = await store.saveStory(target, data, coverChanged ? cover : undefined, story);
       if (slug) {
         setStory(updated);

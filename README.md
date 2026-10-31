@@ -24,6 +24,16 @@ Trang web tĩnh không tự lưu file được, nên trang quản lý **commit t
 3. *Permissions → Repository permissions → Contents* → **Read and write**.
 4. Generate token, dán vào trang Quản lý. Token chỉ lưu trên trình duyệt của bạn.
 
+### Nhập truyện từ file EPUB
+
+Trong trang Quản lý, bấm **⬆ Nhập từ EPUB** rồi chọn file `.epub`. Trang đọc ngay trên trình duyệt:
+
+- **Thông tin truyện:** tên truyện, tác giả, giới thiệu, thể loại và ảnh bìa.
+- **Chương:** tách theo mục lục của sách, kể cả khi nhiều chương nằm chung một file hay một chương bị tách ra nhiều file.
+- **Định dạng:** giữ in đậm, in nghiêng, xuống dòng, trích dẫn và dấu ngắt cảnh. Hình minh hoạ trong chương thì bị bỏ qua.
+
+Bạn xem lại, sửa tên chương và bỏ chọn các phần không phải truyện. Các phần nằm trước chương đầu tiên (bìa, bản quyền...) được bỏ chọn sẵn. Bấm **Tạo truyện** để lưu tất cả trong một lần commit, đã mã hoá. Chức năng này chỉ tạo truyện mới, không gộp vào truyện có sẵn.
+
 ### Đăng nhập bằng mật khẩu quản lý (không phải dán token ở từng máy)
 
 Tạo token một lần như trên, rồi vào **Settings → Secrets and variables → Actions** và tạo thêm 2 secret:
