@@ -9,6 +9,8 @@ import { useData } from "@/lib/useData";
 import { setProgress } from "@/lib/progress";
 import type { Chapter, Story } from "@/lib/types";
 import { READER_FONTS, fontFamily } from "@/lib/fonts";
+import { downloadChapter } from "@/lib/download";
+import DownloadMenu from "@/components/DownloadMenu";
 
 const FONT_KEY = "readaholic:font";
 const FAMILY_KEY = "readaholic:fontFamily";
@@ -133,6 +135,7 @@ function Reader() {
                   </option>
                 ))}
               </select>
+              {story && <DownloadMenu small label="Tải chương" onDownload={(format) => downloadChapter(story, chapter, format)} />}
             </div>
           </header>
           {nav}

@@ -47,6 +47,13 @@ Rồi đổi secret `ACCESS_CODE` thành mã mới. Nếu chỉ đổi secret m�
 - **Literata** là phông miễn phí, tải từ Google Fonts, có hỗ trợ tiếng Việt.
 - **Bookerly** (của Amazon) và **Caecilia** (của Linotype) là phông bản quyền, nên trang không kèm sẵn. Trang sẽ dùng phông này nếu máy người đọc đã cài, hoặc nếu bạn có file phông hợp lệ thì đặt vào `public/fonts/` theo tên ghi trong `public/fonts/README.md`. Không có thì hiện phông thay thế: Georgia cho Bookerly, Roboto Slab cho Caecilia.
 
+## Tải truyện về máy
+
+- Trang truyện có nút **⬇ Tải cả truyện**, và nút ⬇ cạnh từng chương trong danh sách.
+- Trang đọc có nút **⬇ Tải chương**.
+- Có 2 định dạng: **EPUB** (sách điện tử, có ảnh bìa và mục lục, giữ in đậm/in nghiêng; đọc trên điện thoại, Apple Books, Google Play Books, Kindle qua Send to Kindle) và **TXT** (văn bản thuần).
+- File được tạo ngay trên trình duyệt sau khi nhập mã. File đã tải về **không còn được mã hoá**.
+
 ## Cấu trúc dữ liệu
 
 ```

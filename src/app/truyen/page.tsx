@@ -7,11 +7,16 @@ import Protected from "@/components/Protected";
 import Cover from "@/components/Cover";
 import { formatDate, formatNumber, STATUS_LABEL } from "@/components/format";
 import { useData } from "@/lib/useData";
+import { useAuth } from "@/lib/auth";
+import { fetchDecrypted } from "@/lib/crypto";
+import { downloadChapter, downloadStory } from "@/lib/download";
+import DownloadMenu from "@/components/DownloadMenu";
 import { getProgress } from "@/lib/progress";
-import type { Story } from "@/lib/types";
+import type { Chapter, Story } from "@/lib/types";
 
 function StoryView() {
   const slug = useSearchParams().get("id");
+  const { key } = useAuth();
   const { data: story, error } = useData<Story>(slug ? `s/${slug}.json` : null);
   const [progress, setProgress] = useState<number | null>(null);
   const [desc, setDesc] = useState(false);
@@ -70,6 +75,12 @@ function StoryView() {
                   Chương mới nhất
                 </Link>
               )}
+              <DownloadMenu
+                label="Tải cả truyện"
+                onDownload={(format, progress) =>
+                  downloadStory(key!, story, format, (done) => progress(`Đang tải ${done}/${story.chapterCount} chương...`))
+                }
+              />
             </div>
           )}
         </div>
@@ -97,6 +108,13 @@ function StoryView() {
                 <span>{c.title}</span>
                 <span className="muted small">{formatDate(c.date)}</span>
               </Link>
+              <DownloadMenu
+                compact
+                label={`Tải ${c.title}`}
+                onDownload={async (format) =>
+                  downloadChapter(story, await fetchDecrypted<Chapter>(key!, `s/${story.slug}/${c.n}.json`), format)
+                }
+              />
             </li>
           ))}
         </ol>
